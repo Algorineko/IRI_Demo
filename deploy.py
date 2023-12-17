@@ -22,13 +22,13 @@ app.add_middleware(
 async def root():
     return {"message": "Hello IRI"}
 
-# 获取测试数据
-@app.post("/test_ne")
-async def test_ne(information: dict):
+# 获取2D测试数据
+@app.post("/get_2D_info")
+async def get_2D_info(information: dict):
     time = information['time']
-    altitude_start = int(information['artitude_start'])
-    altitude_stop = int(information['artitude_stop'])
-    altitude_stepsize = int(information['artitude_stepsize'])
+    altitude_start = int(information['altitude_start'])
+    altitude_stop = int(information['altitude_stop'])
+    altitude_stepsize = int(information['altitude_stepsize'])
     longitude = int(information['longitude'])
     latitude = int(information['latitude'])
 
@@ -36,3 +36,27 @@ async def test_ne(information: dict):
     arr_ne = arr['ne'].to_numpy().tolist()
     arr_nOp = arr['nO+'].to_numpy().tolist()
     return {"ne": arr_ne, "nOp": arr_nOp}
+
+# 获取3D测试数据
+@app.post("/get_3D_info")
+async def get_3D_info(information_3d: dict):
+    try:
+        time = information_3d['time']
+        altitude = int(information_3d['altitude'])
+        longitude_start = int(information_3d['longitude_start'])
+        longitude_stop = int(information_3d['longitude_stop'])
+        latitude_start = int(information_3d['latitude_start'])
+        latitude_stop = int(information_3d['latitude_stop'])
+        position_stepsize = int(information_3d['position_stepsize'])
+        ne_data = []
+        # 循环遍历经纬度范围，获取Ne数据
+        for lon in range(longitude_start, longitude_stop + 1, position_stepsize):
+            for lat in range(latitude_start, latitude_stop + 1, position_stepsize):
+                arr = iri2016.IRI(time, (altitude, altitude+1, 1), lon, lat)
+                ne_value = arr['ne'].values[0]
+                # 将 Ne 浓度数据添加到数组中
+                ne_data.append([lon,lat,ne_value])
+        return {"neData": ne_data}
+    except Exception as e:
+        print("Error in get_3D_info:", str(e))
+        raise
